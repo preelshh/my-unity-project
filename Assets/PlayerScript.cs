@@ -4,57 +4,67 @@ using UnityEngine.InputSystem;
 public class PlayerScript : MonoBehaviour
 {
     float movementX;
-    float movementY;
-    [SerializeField] float speed = 6;
+    [SerializeField] float speed = 5;
     [SerializeField] Rigidbody2D rb;
+    [SerializeField] float jumpPower = 50;
+    bool jumping = false;
+    bool touchingGround;
 
-     
+    // ✅ New: Reference to the Animator
+    Animator animator;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        animator = GetComponent<Animator>();   // get the Animator component on the same object
     }
 
     void OnMove(InputValue value)
     {
         Vector2 v = value.Get<Vector2>();
         movementX = v.x;
-        movementY = v.y;
-
         Debug.Log(v);
+    }
+
+    void OnJump()
+    {
+        if (touchingGround)
+        {
+            jumping = true;
+        }
     }
 
     void FixedUpdate()
     {
-        float XmoveDistance = movementX * speed * Time.fixedDeltaTime;
-        float YmoveDistance = movementY * speed * Time.fixedDeltaTime;
-        transform.position = new Vector2(transform.position.x + XmoveDistance, transform.position.y + YmoveDistance);
-       // rb.linearVelocity = new Vector2(XmoveDistance, YmoveDistance);
+        // Horizontal movement
+        Vector2 vel = rb.linearVelocity;
+        vel.x = movementX * speed;
+        rb.linearVelocity = vel;
 
+        // ✅ New: Update Animator parameter based on movement
+        animator.SetBool("isWalking", movementX != 0);
+
+        // Jumping
+        if (jumping)
+        {
+            rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            jumping = false; // ensure it only fires once per jump
+        }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        collision.gameObject.SetActive(false);
+        if (collision.gameObject.CompareTag("ground"))
+        {
+            touchingGround = true;
+        }
     }
 
-    private void OnTriggerStay2D(Collider2D collision)
+    private void OnCollisionExit2D(Collision2D collision)
     {
-
+        if (collision.gameObject.CompareTag("ground"))
+        {
+            touchingGround = false;
+        }
     }
-
-    private void OnTriggeExit2D(Collider2D collision)
-    {
-
-    }
-    
-  
 }

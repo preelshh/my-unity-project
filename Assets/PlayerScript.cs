@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,47 +9,57 @@ public class PlayerScript : MonoBehaviour
     [SerializeField] Rigidbody2D rb;
     [SerializeField] float jumpPower = 50;
     bool jumping = false;
+    private int coinScore;
     bool touchingGround;
 
-    // ✅ New: Reference to the Animator
-    Animator animator;
+    private Animator animator;
+    private SpriteRenderer spriteRenderer;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();   // get the Animator component on the same object
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();   
     }
 
     void OnMove(InputValue value)
     {
         Vector2 v = value.Get<Vector2>();
         movementX = v.x;
-        Debug.Log(v);
     }
 
     void OnJump()
     {
         if (touchingGround)
         {
+            rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
             jumping = true;
+        }
+    }
+
+    void Update()
+    {
+        
+        animator.SetBool("isWalking", movementX != 0f);
+
+       
+        if (movementX != 0)
+        {
+            spriteRenderer.flipX = movementX < 0f;
         }
     }
 
     void FixedUpdate()
     {
-        // Horizontal movement
+       
         Vector2 vel = rb.linearVelocity;
         vel.x = movementX * speed;
         rb.linearVelocity = vel;
 
-        // ✅ New: Update Animator parameter based on movement
-        animator.SetBool("isWalking", movementX != 0);
-
-        // Jumping
         if (jumping)
         {
-            rb.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
-            jumping = false; // ensure it only fires once per jump
+            rb.AddForce(Vector2.up * jumpPower);
+            jumping = false;
         }
     }
 
@@ -66,5 +77,11 @@ public class PlayerScript : MonoBehaviour
         {
             touchingGround = false;
         }
+    }
+
+    public void AddCoin(int value)
+    {
+        coinScore += value;
+        UnityEngine.Debug.Log(value);
     }
 }
